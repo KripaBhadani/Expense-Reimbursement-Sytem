@@ -1,9 +1,10 @@
-const { Model, DataTypes } = require("sequelize");
+const { Model, DataTypes } = require('sequelize');
 
 module.exports = (sequelize) => {
   class Approval extends Model {
     static associate(models) {
-      Approval.belongsTo(models.Expense, { foreignKey: "expenseId" });
+      Approval.belongsTo(models.Expense, { foreignKey: 'expenseId', onDelete: 'CASCADE' });
+      Approval.belongsTo(models.User, { foreignKey: 'managerId', as: 'manager' });
     }
   }
 
@@ -23,8 +24,9 @@ module.exports = (sequelize) => {
         allowNull: false,
       },
       status: {
-        type: DataTypes.ENUM("Pending", "Approved", "Rejected"),
+        type: DataTypes.ENUM('Pending', 'Approved', 'Rejected'),
         allowNull: false,
+        defaultValue: 'Pending',
       },
       comment: {
         type: DataTypes.TEXT,
@@ -46,8 +48,8 @@ module.exports = (sequelize) => {
     },
     {
       sequelize,
-      modelName: "Approval",
-      timestamps: true,
+      modelName: 'Approval',
+      timestamps: true, // Automatically handles createdAt and updatedAt
     }
   );
 

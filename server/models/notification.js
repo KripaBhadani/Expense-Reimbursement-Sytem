@@ -1,9 +1,10 @@
-const { Model, DataTypes } = require("sequelize");
+const { Model, DataTypes } = require('sequelize');
 
 module.exports = (sequelize) => {
   class Notification extends Model {
     static associate(models) {
-      Notification.belongsTo(models.User, { foreignKey: "userId" });
+      Notification.belongsTo(models.User, { foreignKey: 'userId' });
+      Notification.belongsTo(models.Expense, { foreignKey: 'expenseId' });
     }
   }
 
@@ -23,7 +24,7 @@ module.exports = (sequelize) => {
         allowNull: true,
       },
       notificationType: {
-        type: DataTypes.ENUM("Info", "Alert"),
+        type: DataTypes.ENUM('Info', 'Alert'),
         allowNull: false,
       },
       message: {
@@ -31,8 +32,8 @@ module.exports = (sequelize) => {
         allowNull: false,
       },
       status: {
-        type: DataTypes.ENUM("Unread", "Read"),
-        defaultValue: "Unread",
+        type: DataTypes.ENUM('Unread', 'Read'),
+        defaultValue: 'Unread',
         allowNull: false,
       },
       createdAt: {
@@ -50,7 +51,7 @@ module.exports = (sequelize) => {
     },
     {
       sequelize,
-      modelName: "Notification",
+      modelName: 'Notification',
       timestamps: false,
     }
   );

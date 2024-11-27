@@ -10,9 +10,10 @@ require("dotenv").config();
 
 const { sequelize } = require("./models"); // Import models and Sequelize instance
 const authRoutes = require("./routes/authRoutes");
-const expenseRoutes = require("./routes/expenseRoutes");
-const { authenticateJWT } = require("./middleware/authMiddleware"); // Middleware for JWT authentication
+const claimRoutes = require("./routes/claimsRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
+
+const expenseRoutes = require("./routes/expenseRoutes");
 
 const app = express();
 
@@ -21,13 +22,12 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors({ origin: process.env.CORS_ORIGIN, credentials: true })); // Update origin as needed
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
-app.use("/api/dashboard", dashboardRoutes);
-
-// app.use(expenseRoutes);
 
 // Routes
 app.use("/api/auth", authRoutes); // Auth routes
-app.use("/api/claims", authenticateJWT, expenseRoutes); // Modularized expense routes with JWT authentication
+app.use("/api/claims", claimRoutes); // Modularized expense routes with JWT authentication
+app.use("/api/dashboard", dashboardRoutes);
+// app.use(expenseRoutes);
 
 // Error Handling
 app.use((err, req, res, next) => {
@@ -37,23 +37,12 @@ app.use((err, req, res, next) => {
 
 // Database synchronization
 sequelize
-    .sync({ logging: false })
+    .sync({ logging: false, force: false })
     .then(() => console.log("Database connected and models synced"))
     .catch((err) => console.error("DB connection error:", err));
 
 module.exports = app;
 
-
-// // Fetch Claims
-// app.get("/api/claims", authenticateToken, async (req, res) => {
-//     try {
-//         const claims = await Expense.findAll({ where: { userId: req.user.id } });
-//         res.json({ claims });
-//     } catch (error) {
-//         console.error(error);
-//         res.status(500).json({ error: "Failed to fetch claims" });
-//     }
-// });
 
 // // Download Report
 // app.get("/api/claims/report", authenticateToken, async (req, res) => {
@@ -77,23 +66,6 @@ module.exports = app;
 //     }
 // });
 
-// // Submit Expense
-// app.post("/api/expenses", authenticateToken, async (req, res) => {
-//     const { amount, description, receiptUrl } = req.body;
-
-//     try {
-//         const expense = await Expense.create({
-//             userId: req.user.id,
-//             amount,
-//             description,
-//             receiptUrl,
-//         });
-//         res.status(201).json({ expense });
-//     } catch (error) {
-//         console.error(error);
-//         res.status(500).json({ error: "Failed to submit expense" });
-//     }
-// });
 
 // // Approve/Reject Expense
 // app.put("/api/expenses/:id", async (req, res) => {

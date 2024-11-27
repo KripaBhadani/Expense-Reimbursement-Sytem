@@ -1,18 +1,15 @@
 import React, { useState, useEffect } from "react";
 import { Button, Table } from "react-bootstrap";
-import axios from "axios";  // Import axios
+import axiosInstance from "../../utils/axiosInstance";  // Import axios
 
 const FinanceDashboard = () => {
   const [approvedClaims, setApprovedClaims] = useState([]);
-  const token = localStorage.getItem("token");
 
   useEffect(() => {
     const fetchApprovedClaims = async () => {
       try {
-        const response = await axios.get("/api/claims/approved", {
-          headers: { Authorization: `Bearer ${token}` },
-        }); // Fetch approved claims
-        setApprovedClaims(response.data.claims);  // Assuming the response is in { claims: [...] }
+        const response = await axiosInstance.get("/claims/approved"); // Fetch approved claims
+        setApprovedClaims(response.data.claims);  
       } catch (error) {
         console.error("Error fetching approved claims:", error);
       }
@@ -22,7 +19,7 @@ const FinanceDashboard = () => {
 
   const processClaim = async (claimId) => {
     try {
-      await axios.post(`/api/claims/process/${claimId}`);
+      await axiosInstance.post(`/claims/process/${claimId}`);
       alert("Claim Processed");
     } catch (error) {
       console.error("Error processing claim:", error);

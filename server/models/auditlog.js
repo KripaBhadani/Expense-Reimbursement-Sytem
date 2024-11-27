@@ -1,9 +1,9 @@
-const { Model, DataTypes } = require("sequelize");
+const { Model, DataTypes } = require('sequelize');
 
 module.exports = (sequelize) => {
   class AuditLog extends Model {
     static associate(models) {
-      AuditLog.belongsTo(models.User, { foreignKey: "userId" });
+      AuditLog.belongsTo(models.User, { foreignKey: 'userId' });
     }
   }
 
@@ -39,7 +39,7 @@ module.exports = (sequelize) => {
         allowNull: true,
       },
       actionType: {
-        type: DataTypes.ENUM("Create", "Update", "Delete"),
+        type: DataTypes.ENUM('Create', 'Update', 'Delete'),
         allowNull: false,
       },
       timestamp: {
@@ -49,8 +49,8 @@ module.exports = (sequelize) => {
     },
     {
       sequelize,
-      modelName: "AuditLog",
-      timestamps: false,
+      modelName: 'AuditLog',
+      timestamps: false, // Explicitly disables Sequelize's automatic timestamps
     }
   );
 

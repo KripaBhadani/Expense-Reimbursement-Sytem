@@ -2,63 +2,59 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable('Notifications', {
+    await queryInterface.createTable('Notification', {
       id: {
         type: Sequelize.UUID,
         defaultValue: Sequelize.UUIDV4,
         primaryKey: true,
-        allowNull: false
+        allowNull: false,
       },
       userId: {
         type: Sequelize.UUID,
         references: {
-          model: 'Users',
-          key: 'id'
+          model: 'User',
+          key: 'id',
         },
-        allowNull: false
+        allowNull: false,
       },
       expenseId: {
         type: Sequelize.UUID,
         references: {
-          model: 'Expenses',
-          key: 'id'
+          model: 'Expense',
+          key: 'id',
         },
-        allowNull: false
+        allowNull: true,
       },
       notificationType: {
-        type: Sequelize.STRING,
-        allowNull: false
+        type: Sequelize.ENUM('Info', 'Alert'),
+        allowNull: false,
       },
       message: {
         type: Sequelize.STRING,
-        allowNull: false
+        allowNull: false,
       },
       status: {
-        type: Sequelize.ENUM('Pending', 'Sent', 'Failed'),
-        allowNull: false
+        type: Sequelize.ENUM('Unread', 'Read'),
+        defaultValue: 'Unread',
+        allowNull: false,
       },
       createdAt: {
         type: Sequelize.DATE,
         allowNull: false,
-        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
+        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
       },
       sentAt: {
         type: Sequelize.DATE,
-        allowNull: true
+        allowNull: true,
       },
       readAt: {
         type: Sequelize.DATE,
-        allowNull: true
+        allowNull: true,
       },
-      updatedAt: {
-        type: Sequelize.DATE,
-        allowNull: false,
-        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
-      }
     });
   },
 
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable('Notifications');
-  }
+    await queryInterface.dropTable('Notification');
+  },
 };

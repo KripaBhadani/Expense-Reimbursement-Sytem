@@ -2,46 +2,54 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable('AuditLogs', {
+    await queryInterface.createTable('AuditLog', {
       id: {
         type: Sequelize.UUID,
         defaultValue: Sequelize.UUIDV4,
         primaryKey: true,
-        allowNull: false
+        allowNull: false,
       },
       userId: {
         type: Sequelize.UUID,
         references: {
-          model: 'Users',
-          key: 'id'
+          model: 'User',
+          key: 'id',
         },
-        allowNull: false
+        allowNull: false,
       },
-      action: {
+      tableName: {
         type: Sequelize.STRING,
-        allowNull: false
+        allowNull: false,
+      },
+      recordId: {
+        type: Sequelize.UUID,
+        allowNull: false,
       },
       fieldChanged: {
         type: Sequelize.STRING,
-        allowNull: true
+        allowNull: false,
       },
       oldValue: {
-        type: Sequelize.STRING,
-        allowNull: true
+        type: Sequelize.TEXT,
+        allowNull: true,
       },
       newValue: {
-        type: Sequelize.STRING,
-        allowNull: true
+        type: Sequelize.TEXT,
+        allowNull: true,
+      },
+      actionType: {
+        type: Sequelize.ENUM('Create', 'Update', 'Delete'),
+        allowNull: false,
       },
       timestamp: {
         type: Sequelize.DATE,
         allowNull: false,
-        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
-      }
+        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
+      },
     });
   },
 
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable('AuditLogs');
-  }
+    await queryInterface.dropTable('AuditLog');
+  },
 };

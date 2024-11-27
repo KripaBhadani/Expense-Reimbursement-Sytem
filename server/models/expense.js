@@ -23,14 +23,26 @@
           type: DataTypes.DECIMAL,
           allowNull: false,
           validate: {
-            min: 0.01,
+            min: {
+              args: [0.01],
+              msg: "Amount must be greater than zero",
+            },
           },
         },
+        category: {
+          type: DataTypes.ENUM('Travel', 'Meals', 'Accommodation', 'Supplies', 'Office', 'Training', 'Entertainment', 'Technology', 'Medical', 'Other'), 
+          allowNull: false,
+        },        
         description: {
           type: DataTypes.TEXT,
-          allowNull: true,
+          allowNull: false,
+          validate: {
+            notEmpty: {
+              msg: "Description is required.",
+            },
+          },
         },
-        receiptUrl: {
+        receipt: {
           type: DataTypes.STRING,
           allowNull: true,
         },

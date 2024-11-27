@@ -1,44 +1,39 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button, Table } from "react-bootstrap";
-import axios from "axios"; // Import axios
+import axiosInstance from "../../utils/axiosInstance";
 
 const EmployeeDashboard = () => {
   const [claims, setClaims] = useState([]);
   const [reportLoading, setReportLoading] = useState(false);
-  const token = localStorage.getItem("token"); // Fetch token from local storage
+  const [loading, setLoading] = useState(true);
 
   // Fetch claims from the server
   useEffect(() => {
     const fetchClaims = async () => {
+      setLoading(true);
       try {
-        const response = await axios.get("http://localhost:5000/api/claims", {
-          headers: { 
-            Authorization: `Bearer ${token}` 
-          },
-        });
-        setClaims(response.data.claims); // Assuming the API returns claims in { claims: [...] }
+        const response = await axiosInstance.get("/claims");
+        setClaims(response.data.claims);
       } catch (error) {
-        console.error(
-          "Error fetching claims:",
-          error.response?.data?.message || error.message
-        );
-
+        console.error("Error fetching claims:", error.response?.data?.message || error.message);
         if (error.response?.status === 401) {
           alert("Session expired. Please log in again.");
           window.location.href = "/login"; // Redirect to login if unauthorized
-        }
+        } 
+      } finally {
+        setLoading(false);
       }
     };
+    
     fetchClaims();
-  }, [token]);
+  }, []);
 
   // Download report
   const downloadReport = async () => {
     setReportLoading(true);
     try {
-      const response = await axios.get("http://localhost:5000/api/claims/report", {
-        headers: { Authorization: `Bearer ${token}` },
+      const response = await axiosInstance.get("/claims/report", {
         responseType: "blob", // Handle binary data
       });
 
@@ -69,7 +64,7 @@ const EmployeeDashboard = () => {
         </Button>
       </div>
       <h3 className="mt-4">Submitted Claims</h3>
-      {claims.length > 0 ? (
+      {loading ? <p>Loading claims...</p> : claims.length > 0 ? (
         <Table striped bordered hover>
           <thead>
             <tr>
