@@ -1,8 +1,11 @@
 const express = require("express");
 const { Expense } = require('../models');
+const { User } = require('../models');
 const { authenticateJWT } = require('../middleware/authMiddleware');
 const { body, validationResult } = require('express-validator');
 const upload = require('../middleware/upload');
+const { sendEmail, sendGenericEmail } = require("../utils/email");
+
 
 const router = express.Router();
 
@@ -83,7 +86,14 @@ router.post(
                 receipt: receiptUrl, // Optional: Uploaded file path
                 status: "Pending", // Default status for a new claim
             });
-            console.log('New Expense Created:', newClaim);
+
+            // Send email notification
+            const subject = "Claim Submitted";
+            const message = `Your claim for ₹${amount} has been successfully submitted.`;
+            console.log("req.user:", req.user);
+
+            console.log("Sending Email to: ", req.user.email);
+            await sendEmail(req.user.email, subject, message);
 
             res.status(201).json({ message: "Claim submitted successfully", newClaim });
         } catch (error) {
@@ -97,54 +107,90 @@ router.put('/:id', authenticateJWT, async (req, res) => {
     const { id } = req.params; // Claim ID
     const { status } = req.body; // New status: "approved" or "rejected"
     const validStatuses = ["Approved", "Rejected"];
+
     if (!validStatuses.includes(status)) {
         return res.status(400).json({ message: "Invalid status" });
     }
+
     try {
         // Update the status of the claim
+        const claim = await Expense.findOne({
+            where: { id },
+            include: [{ model: User, as: 'User', attributes: ['email', 'id'] }],
+        })
+
+        if (!claim) {
+            return res.status(404).json({ message: "Claim not found" });
+        }
+
         const updatedClaim = await Expense.update(
             { status }, // Update this field
             { where: { id }, returning: true } // Filter by claim ID
         );
 
-        // Check if the claim exists
-        if (updatedClaim[0] === 0) {
-            return res.status(404).json({ message: "Claim not found" });
-        }
+        // Update the claim status
+        claim.status = status;
+        await claim.save();
+
+        const employeeEmail = claim.User.email; // Employee email
+        const managerEmail = req.user.email; // Manager email (from JWT)
+
+        const subject = `Claim ${status}`;
+        const employeeMessage =
+            status === "Approved"
+                ? `Your claim with ID ${id} has been approved.`
+                : `Your claim with ID ${id} has been rejected.`;
+        const managerMessage = `You have ${status.toLowerCase()} the claim with ID ${id} submitted by user ID ${claim.User.id}.`;
+
+         // Send email to both employee and manager
+         await sendGenericEmail(employeeEmail, subject, employeeMessage, managerEmail); // Email to employee
+         await sendEmail(managerEmail, subject, managerMessage); // Email to manager
 
         // Respond with the updated claim
-        res.json({ message: "Claim updated successfully", claim: updatedClaim[1][0] });
+        res.json({ message: `Claim ${status.toLowerCase()} successfully`, claim });
     } catch (error) {
         console.error("Error updating claim status:", error);
         res.status(500).json({ error: "Failed to update claim status" });
     }
 });
 
-// In your claimsRoutes.js (or wherever you define your routes)
+// To request additonal information
 router.put('/:id/request-info', authenticateJWT, async (req, res) => {
     const { id } = req.params; // Get the claim ID from the URL
     const { requestedInfo } = req.body; // Get the requested additional information from the body
 
     try {
-        const updatedExpense = await Expense.update(
-            { requestedInfo }, // Update the requestedInfo field with the data provided
-            { where: { id }, returning: true } // Find the record by ID and update
-        );
+        // Find the claim and include the associated user (employee) details
+        const claim = await Expense.findOne({
+            where: { id },
+            include: [{ model: User, as: 'User', attributes: ['email', 'id'] }],
+        });
 
-        if (updatedExpense[0] === 0) {
-            return res.status(404).json({ message: "Expense not found" });
+        if (!claim) {
+            return res.status(404).json({ message: "Claim not found" });
         }
 
-        res.json({
-            message: "Additional information requested successfully",
-            expense: updatedExpense[1][0],
-        });
+        // Update the requestedInfo field
+        claim.requestedInfo = requestedInfo;
+        await claim.save();
+
+        const employeeEmail = claim.User.email; // Employee email
+        const managerEmail = req.user.email; // Manager email (from JWT)
+
+        // Send email notifications
+        const subject = "Additional Information Required";
+        const employeeMessage = `Additional information is required for your claim with ID ${id}: ${requestedInfo}`;
+        const managerMessage = `You have requested additional information for claim ID ${id} submitted by user ID ${claim.User.id}.`;
+
+        // Send email to both employee and manager
+        await sendGenericEmail(employeeEmail, subject, employeeMessage, managerEmail); // Email to employee
+        await sendEmail(managerEmail, subject, managerMessage); // Email to manager
+
+        res.json({message: "Additional information requested successfully", claim,});
     } catch (error) {
         console.error("Error requesting additional information:", error);
         res.status(500).json({ error: "Failed to request additional information" });
     }
 });
-
-
 
 module.exports = router;
