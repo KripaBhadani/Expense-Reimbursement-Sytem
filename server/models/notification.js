@@ -26,6 +26,7 @@ module.exports = (sequelize) => {
       notificationType: {
         type: DataTypes.ENUM('Info', 'Alert'),
         allowNull: false,
+        defaultValue: 'Info',
       },
       message: {
         type: DataTypes.STRING,

@@ -5,6 +5,7 @@ const { authenticateJWT } = require('../middleware/authMiddleware');
 const { body, validationResult } = require('express-validator');
 const upload = require('../middleware/upload');
 const { sendEmail, sendGenericEmail } = require("../utils/email");
+const logNotification = require("../utils/logNotification");
 
 
 const router = express.Router();
@@ -95,6 +96,15 @@ router.post(
             console.log("Sending Email to: ", req.user.email);
             await sendEmail(req.user.email, subject, message);
 
+            // Log the notification
+            await logNotification({
+                userId: req.user.id,
+                expenseId: newClaim.id,
+                notificationType: "Info",
+                message: message,
+                sentAt: new Date(),
+            });
+
             res.status(201).json({ message: "Claim submitted successfully", newClaim });
         } catch (error) {
             console.error(error);
@@ -132,6 +142,8 @@ router.put('/:id', authenticateJWT, async (req, res) => {
         claim.status = status;
         await claim.save();
 
+        const employeeId = claim.User.id;
+        const managerId = req.user.id;
         const employeeEmail = claim.User.email; // Employee email
         const managerEmail = req.user.email; // Manager email (from JWT)
 
@@ -145,6 +157,24 @@ router.put('/:id', authenticateJWT, async (req, res) => {
          // Send email to both employee and manager
          await sendGenericEmail(employeeEmail, subject, employeeMessage, managerEmail); // Email to employee
          await sendEmail(managerEmail, subject, managerMessage); // Email to manager
+
+         // Log notifications in the database
+         await logNotification({
+            userId: employeeId,
+            expenseId: id,
+            notificationType: "Alert",
+            message: employeeMessage,
+            sentAt: new Date(), // or `null` if `sentAt` is optional
+          });
+          
+         await logNotification({
+            userId: managerId,
+            expenseId: id,
+            notificationType: "Info",
+            message: managerMessage,
+            sentAt: new Date(), // or `null` if `sentAt` is optional
+          });
+          
 
         // Respond with the updated claim
         res.json({ message: `Claim ${status.toLowerCase()} successfully`, claim });
@@ -174,7 +204,9 @@ router.put('/:id/request-info', authenticateJWT, async (req, res) => {
         claim.requestedInfo = requestedInfo;
         await claim.save();
 
+        const employeeId = claim.User.id;
         const employeeEmail = claim.User.email; // Employee email
+        const managerId = req.user.id;
         const managerEmail = req.user.email; // Manager email (from JWT)
 
         // Send email notifications
@@ -185,6 +217,23 @@ router.put('/:id/request-info', authenticateJWT, async (req, res) => {
         // Send email to both employee and manager
         await sendGenericEmail(employeeEmail, subject, employeeMessage, managerEmail); // Email to employee
         await sendEmail(managerEmail, subject, managerMessage); // Email to manager
+
+        // Log notifications in the database
+        await logNotification({
+            userId: employeeId,
+            expenseId: id,
+            notificationType: "Alert",
+            message: employeeMessage,
+            sentAt: new Date(), // or `null` if `sentAt` is optional
+          });
+          
+        await logNotification({
+            userId: managerId,
+            expenseId: id,
+            notificationType: "Info",
+            message: managerMessage,
+            sentAt: new Date(), // or `null` if `sentAt` is optional
+          });
 
         res.json({message: "Additional information requested successfully", claim,});
     } catch (error) {

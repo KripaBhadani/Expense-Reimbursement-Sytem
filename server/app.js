@@ -7,13 +7,14 @@ require("dotenv").config();
 // const fs = require("fs");
 // const { Parser } = require("json2csv"); // For report generation
 
-
 const { sequelize } = require("./models"); // Import models and Sequelize instance
 const authRoutes = require("./routes/authRoutes");
 const claimRoutes = require("./routes/claimsRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
-
 const expenseRoutes = require("./routes/expenseRoutes");
+const notificationRoutes = require("./routes/notificationRoutes");
+const reportsRoutes = require("./routes/reportRoutes");
+const userRoutes = require("./routes/userRoutes");
 
 const app = express();
 
@@ -27,6 +28,9 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use("/api/auth", authRoutes); // Auth routes
 app.use("/api/claims", claimRoutes); // Modularized expense routes with JWT authentication
 app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/notifications", notificationRoutes);
+app.use("/api/reports", reportsRoutes);
+app.use("/api", userRoutes);
 // app.use(expenseRoutes);
 
 // Error Handling
@@ -66,35 +70,3 @@ module.exports = app;
 //     }
 // });
 
-
-// // Approve/Reject Expense
-// app.put("/api/expenses/:id", async (req, res) => {
-//     const { id } = req.params;
-//     const { status } = req.body;
-
-//     try {
-//         const updatedRows = await Expense.update({ status }, { where: { id } });
-//         if (updatedRows[0] === 0) return res.status(404).json({ error: "Expense not found" });
-
-//         res.json({ message: "Expense status updated successfully" });
-//     } catch (error) {
-//         console.error(error);
-//         res.status(500).json({ error: "Failed to update expense status" });
-//     }
-// });
-
-// // Request Additional Information
-// app.put("/api/expenses/:id/request-info", authenticateToken, async (req, res) => {
-//     const { id } = req.params;
-//     const { requestedInfo } = req.body;
-
-//     try {
-//         const updatedRows = await Expense.update({ requestedInfo }, { where: { id } });
-//         if (updatedRows[0] === 0) return res.status(404).json({ error: "Expense not found" });
-
-//         res.json({ message: "Requested additional information successfully" });
-//     } catch (error) {
-//         console.error(error);
-//         res.status(500).json({ error: "Failed to request additional info" });
-//     }
-// });

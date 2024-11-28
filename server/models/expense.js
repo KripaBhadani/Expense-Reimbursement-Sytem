@@ -5,6 +5,8 @@
       static associate(models) {
         Expense.belongsTo(models.User, { foreignKey: "userId" });
         Expense.hasMany(models.Approval, { foreignKey: "expenseId" });
+        Expense.hasMany(models.Notification, { foreignKey: 'expenseId' });
+
       }
     }
 

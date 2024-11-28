@@ -7,8 +7,8 @@ import Register from "./components/Auth/Register";
 import EmployeeDashboard from "./components/Dashboards/EmployeeDashboard";
 import ManagerDashboard from "./components/Dashboards/ManagerDashboard";
 import FinanceDashboard from "./components/Dashboards/FinanceDashboard";
-import { checkRoleAccess } from "./utils/Auth"; // Utility function for role validation
 import ExpenseForm from "./components/ExpenseForm";
+import ProfilePage from "./components/ProfilePage";
 
 const App = () => {
   const [userRole, setUserRole] = useState(null);
@@ -16,7 +16,7 @@ const App = () => {
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   console.log("Local Storage Role:", localStorage.getItem("role"));
-    console.log("State UserRole:", userRole);
+  console.log("State UserRole:", userRole);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -65,6 +65,7 @@ const App = () => {
             // checkRoleAccess(userRole, ["finance"]) ? <FinanceDashboard /> : <Navigate to="/" />}
         />
         <Route path="/submit-claim" element={<ExpenseForm />} />
+        <Route path="/user-profile" element={<ProfilePage />} />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </Router>

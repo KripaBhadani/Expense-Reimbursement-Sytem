@@ -27,6 +27,8 @@ const Login = () => {
             const decoded = jwtDecode(data.token); 
             localStorage.setItem("role", decoded.role);
             localStorage.setItem("email", decoded.email);
+            localStorage.setItem("userId", decoded.id); // Save userId
+            localStorage.setItem("name", decoded.name);
 
             alert("Login successful");
 
