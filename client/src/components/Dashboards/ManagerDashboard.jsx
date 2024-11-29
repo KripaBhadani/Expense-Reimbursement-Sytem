@@ -17,6 +17,7 @@ const ManagerDashboard = () => {
   const [notifications, setNotifications] = useState([]); // State for storing notifications
   const [reportLoading, setReportLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [loadingClaims, setLoadingClaims] = useState({});
   
 
   // Fetch Pending claims
@@ -53,6 +54,7 @@ const ManagerDashboard = () => {
 
   // Approve claim
   const handleApprove = async (claimId) => {
+    setLoadingClaims((prev) => ({ ...prev, [`approve_${claimId}`]: true }));
     try {
       await axiosInstance.put(`/claims/${claimId}`, { status: "Approved" });
       alert("Claim Approved");
@@ -60,11 +62,14 @@ const ManagerDashboard = () => {
     } catch (error) {
       console.error("Error approving claim:", error);
       alert("Failed to approve the claim");
+    }finally {
+      setLoadingClaims((prev) => ({ ...prev, [`approve_${claimId}`]: false })); // Set loading to false after processing
     }
   };
 
   // Reject claim
   const handleReject = async (claimId) => {
+    setLoadingClaims((prev) => ({ ...prev, [`reject_${claimId}`]: true }));
     try {
       await axiosInstance.put(`/claims/${claimId}`, { status: "Rejected" });
       alert("Claim Rejected");
@@ -72,11 +77,14 @@ const ManagerDashboard = () => {
     } catch (error) {
       console.error("Error rejecting claim:", error);
       alert("Failed to reject the claim");
+    }finally {
+      setLoadingClaims((prev) => ({ ...prev, [`reject_${claimId}`]: false })); // Set loading to false after processing
     }
   };
 
   // Request additional information
 const handleRequestInfo = async (claimId, requestedInfo) => {
+  setLoadingClaims((prev) => ({ ...prev, [`submit_${claimId}`]: true }));
     try {
         await axiosInstance.put(`/claims/${claimId}/request-info`, { requestedInfo });
         
@@ -86,6 +94,8 @@ const handleRequestInfo = async (claimId, requestedInfo) => {
     } catch (error) {
       console.error("Error requesting additional information:", error);
       alert("Failed to request additional information");
+    } finally {
+      setLoadingClaims((prev) => ({ ...prev, [`submit_${claimId}`]: false })); // Set loading to false after processing
     }
 };
 
@@ -183,11 +193,11 @@ useEffect(() => {
               <td>{claim.description}</td>
               <td>${claim.amount}</td>
               <td>
-                <Button variant="success" className="m-2" onClick={() => handleApprove(claim.id)}>
-                  Approve
+                <Button variant="success" className="m-2" onClick={() => handleApprove(claim.id)} disabled={loadingClaims[`approve_${claim.id}`]}>
+                {loadingClaims[`approve_${claim.id}`] ? <Spinner animation="border" size="sm" /> : "Approve"}
                 </Button>
-                <Button variant="danger" className="m-2" onClick={() => handleReject(claim.id)}>
-                  Reject
+                <Button variant="danger" className="m-2" onClick={() => handleReject(claim.id)} disabled={loadingClaims[`reject_${claim.id}`]}>
+                {loadingClaims[`reject_${claim.id}`] ? <Spinner animation="border" size="sm" /> : "Reject"}
                 </Button>
                 <Button
                   variant="info"
@@ -253,7 +263,7 @@ useEffect(() => {
 
       {/* Modal for entering requested information */}
       <Modal show={showInfoModal} onHide={() => setShowInfoModal(false)}>
-        <Modal.Header closeButton>
+        <Modal.Header closeButton={!loadingClaims[`submit_${expenseIdForRequest}`]}>
           <Modal.Title>Request Additional Information</Modal.Title>
         </Modal.Header>
         <Modal.Body>
@@ -266,14 +276,24 @@ useEffect(() => {
           />
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowInfoModal(false)}>
+          <Button 
+            variant="secondary" 
+            onClick={() => setShowInfoModal(false)} 
+            disabled={loadingClaims[`submit_${expenseIdForRequest}`]}
+            style={
+              loadingClaims[`submit_${expenseIdForRequest}`]
+                ? { opacity: 0.5, pointerEvents: "none" }
+                : {}
+            }
+          >
             Close
           </Button>
+
           <Button
             variant="primary"
-            onClick={() => handleRequestInfo(expenseIdForRequest, requestedInfo)}
+            onClick={() => handleRequestInfo(expenseIdForRequest, requestedInfo)} disabled={loadingClaims[`submit_${expenseIdForRequest}`]}
           >
-            Submit
+            {loadingClaims[`submit_${expenseIdForRequest}`] ? <Spinner animation="border" size="sm" /> : "Submit"}
           </Button>
         </Modal.Footer>
       </Modal>

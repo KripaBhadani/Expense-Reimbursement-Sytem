@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import axios from "axios";
+import './styles/expenseForm.css';
 
 const ExpenseForm = () => {
   const [description, setDescription] = useState("");
@@ -9,19 +10,14 @@ const ExpenseForm = () => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
-  // Constants for file validation
   const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
-
-  // Predefined categories
   const categories = ['Travel', 'Meals', 'Accommodation', 'Supplies', 'Office', 'Training', 'Entertainment', 'Technology', 'Medical', 'Other'];
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
     setLoading(true);
     setMessage(""); // Reset message on form submit
 
-    // Client-side validation
     if (!amount || parseFloat(amount) <= 0) {
       alert("Amount must be greater than zero.");
       setLoading(false);
@@ -53,38 +49,24 @@ const ExpenseForm = () => {
       formData.append("category", category);
       if (receipt) formData.append("receipt", receipt);
 
-      // Log FormData to the console to check its structure
-      for (let pair of formData.entries()) {
-        console.log(pair[0], pair[1]); // Logs key-value pairs of FormData
-      }
+      const token = localStorage.getItem("token");
+      const response = await axios.post("http://localhost:5000/api/claims/submit", formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
+        },
+      });
 
-      const token = localStorage.getItem("token"); // Fetch token from local storage
-      console.log("Token: ", token);
-      
-      const response = await axios.post("http://localhost:5000/api/claims/submit",
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
-
-      console.log(response);
-
-      // On successful submission
       alert("Expense claim submitted successfully!");
       setMessage("Expense claim submitted successfully!");
       setDescription("");
       setAmount("");
       setCategory("");
       setReceipt(null);
-      setTimeout(() => window.location.href = "/dashboard/employee", 100); // Redirect to dashboard
+      setTimeout(() => window.location.href = "/dashboard/employee", 100);
 
     } catch (error) {
       console.error("Error submitting claim:", error.response?.data || error.message);
-      // User-friendly error messages
       if (error.response?.status === 400) {
         setMessage("Invalid input. Please check your data.");
       } else if (error.response?.status === 413) {
@@ -100,33 +82,30 @@ const ExpenseForm = () => {
   };
 
   return (
-    <div className="container mt-4">
-      <div className="card shadow p-4">
-        <h2 className="mb-4 text-center">Submit New Expense Claim</h2>
+    <div className="expense-form-container">
+      <div className="card">
+        <h2 className="form-title">Submit New Expense Claim</h2>
         {message && (
           <div className={`alert ${message.includes("successfully") ? "alert-success" : "alert-danger"}`} role="alert">
             {message}
           </div>
         )}
         <form onSubmit={handleSubmit}>
-          <div className="mb-3">
-            <label htmlFor="description" className="form-label">
-              Description
-            </label>
+          <div className="form-group">
+            <label htmlFor="description">Description</label>
             <textarea
               id="description"
               className="form-control"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Enter a brief description"
-              rows="3"
+              rows="4"
               required
             />
           </div>
-          <div className="mb-3">
-            <label htmlFor="amount" className="form-label">
-              Amount
-            </label>
+
+          <div className="form-group">
+            <label htmlFor="amount">Amount</label>
             <input
               type="number"
               id="amount"
@@ -139,44 +118,37 @@ const ExpenseForm = () => {
               required
             />
           </div>
-          <div className="mb-3">
-            <label htmlFor="category" className="form-label">
-              Category
-            </label>
+
+          <div className="form-group">
+            <label htmlFor="category">Category</label>
             <select
               id="category"
-              className="form-select"
+              className="form-control"
               value={category}
               onChange={(e) => setCategory(e.target.value)}
               required
             >
-              <option value="" disabled>
-                Select a category
-              </option>
+              <option value="" disabled>Select a category</option>
               {categories.map((cat) => (
-                <option key={cat} value={cat}>
-                  {cat}
-                </option>
+                <option key={cat} value={cat}>{cat}</option>
               ))}
             </select>
           </div>
-          <div className="mb-3">
-            <label htmlFor="receipt" className="form-label">
-              Receipt (Optional)
-            </label>
+
+          <div className="form-group">
+            <label htmlFor="receipt">Receipt (Optional)</label>
             <input
               type="file"
               id="receipt"
-              className="form-control"
+              className="form-control-file"
               onChange={(e) => setReceipt(e.target.files[0])}
               accept=".jpg,.jpeg,.png,.pdf"
             />
           </div>
-          <div className="text-center">
-            <button type="submit" className="btn btn-primary w-100" disabled={loading}>
-              {loading ? "Submitting..." : "Submit Claim"}
-            </button>
-          </div>
+
+          <button type="submit" className="btn btn-primary w-100" disabled={loading}>
+            {loading ? "Submitting..." : "Submit Claim"}
+          </button>
         </form>
       </div>
     </div>
